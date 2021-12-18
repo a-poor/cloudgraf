@@ -1,16 +1,60 @@
 import React, { useState } from 'react';
 import './App.css';
 
-import { Button, Navbar, Spinner, Alignment, Collapse, Pre } from "@blueprintjs/core";
+import { Button, Navbar, Alignment, Collapse, Pre } from "@blueprintjs/core";
 
 import CytoscapeComponent from 'react-cytoscapejs';
 
 
-const elements = [
-  { data: { id: 'one', label: 'Node 1' }, position: { x: 0, y: 0 } },
-  { data: { id: 'two', label: 'Node 2' }, position: { x: 100, y: 0 } },
-  { data: { source: 'one', target: 'two', label: 'Edge from Node1 to Node2' } }
+const nodes = [
+  { 
+    data: { 
+      id: 'one', 
+      label: 'Node 1' 
+    }, 
+    // position: { 
+      // x: 0, 
+      // y: 0 
+    // }, 
+  },
+  { 
+    data: { 
+      id: 'two', 
+      label: 'Node 2',
+    }, 
+    // position: { 
+      // x: 100, 
+      // y: 0 
+    // }, 
+  },
 ];
+const edges = [
+  { 
+    data: { 
+      id: "one-to-two",
+      source: "one", 
+      target: "two", 
+      label: "Edge from Node1 to Node2", 
+      isCool: false,
+    }
+  },
+  { 
+    data: { 
+      id: "two-to-one",
+      source: "two", 
+      target: "one", 
+      label: "Edge from Node2 to Node1", 
+      isCool: true,
+    }
+  },
+];
+const elements = [...nodes, ...edges];
+
+// const elements = [
+//   { data: { id: 'one', label: 'Node 1' }, position: { x: 0, y: 0 } },
+//   { data: { id: 'two', label: 'Node 2' }, position: { x: 100, y: 0 } },
+//   { data: { source: 'one', target: 'two', label: 'Edge from Node1 to Node2' } }
+// ];
 
 
 function AppNav() {
@@ -30,10 +74,29 @@ function AppNav() {
 function AppGraph() {
   const style = { 
     width: '600px', 
-    height: '600px' 
+    height: '600px',
+    curveStyle: "unbundled-bezier",
   }
   return (
-    <CytoscapeComponent elements={elements} style={ style } />
+    <CytoscapeComponent 
+      elements={CytoscapeComponent.normalizeElements(elements)} 
+      style={ style }
+      layout={{
+        // name: "circle",
+        // name: "random",
+        // name: "grid",
+        name: "breadthfirst",
+      }}
+      cy={cy => {
+        cy.on('tap', 'node', e => {
+          console.log(`Clicked node ${e.target.id()} :: ${e.target.data().label}`);
+        })
+
+        cy.on('tap', 'edge', e => {
+          console.log(`Clicked edge ${e.target.id()} :: ${e.target.data().label}`);
+        })
+      }}
+    />
   )
 }
 
