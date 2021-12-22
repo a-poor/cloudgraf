@@ -5,27 +5,31 @@ import { Button, Navbar, Alignment, Collapse, Pre } from "@blueprintjs/core";
 
 import CytoscapeComponent from 'react-cytoscapejs';
 
+import Split from 'react-split'
+
+import ReactJson from 'react-json-view-ts'
+
+import useWindowDimensions from './useWindowDimensions';
+
 
 const nodes = [
   { 
     data: { 
       id: 'one', 
-      label: 'Node 1' 
-    }, 
-    // position: { 
-      // x: 0, 
-      // y: 0 
-    // }, 
+      label: 'Node 1',
+      name: 'bar',
+      isCool: false,
+      faveColors: ["red", "green", "blue"],
+    },
   },
   { 
     data: { 
       id: 'two', 
       label: 'Node 2',
+      name: 'foo',
+      isCool: true,
+      faveColors: ["red", "purple"],
     }, 
-    // position: { 
-      // x: 100, 
-      // y: 0 
-    // }, 
   },
 ];
 const edges = [
@@ -50,16 +54,11 @@ const edges = [
 ];
 const elements = [...nodes, ...edges];
 
-// const elements = [
-//   { data: { id: 'one', label: 'Node 1' }, position: { x: 0, y: 0 } },
-//   { data: { id: 'two', label: 'Node 2' }, position: { x: 100, y: 0 } },
-//   { data: { source: 'one', target: 'two', label: 'Edge from Node1 to Node2' } }
-// ];
 
 
-function AppNav() {
+function AppNav({ ...props }) {
   return (
-    <Navbar>
+    <Navbar { ...props }>
       <Navbar.Group align={Alignment.LEFT}>
         <Navbar.Heading>Blueprint</Navbar.Heading>
         <Navbar.Divider />
@@ -71,73 +70,119 @@ function AppNav() {
 }
 
 
-function AppGraph() {
-  const style = { 
-    width: '600px', 
-    height: '600px',
-    curveStyle: "unbundled-bezier",
-  }
+function AppGraph({ width = 600, height = 600, setActiveElement = ()=>{} }: { width?: number, height?: number, setActiveElement?: (e: any)=>void }) {
   return (
-    <CytoscapeComponent 
-      elements={CytoscapeComponent.normalizeElements(elements)} 
-      style={ style }
-      layout={{
-        // name: "circle",
-        // name: "random",
-        // name: "grid",
-        name: "breadthfirst",
+    <div
+      style={{
+        height: height,
+        width: "100%",
+        margin: 0,
+        padding: 0,
+        overflow: "hidden",
       }}
-      cy={cy => {
-        cy.on('tap', 'node', e => {
-          console.log(`Clicked node ${e.target.id()} :: ${e.target.data().label}`);
-        })
+    >
+      <CytoscapeComponent 
+        elements={CytoscapeComponent.normalizeElements(elements)} 
+        style={{
+          width: `${width}px`,
+          height: height,
+          overflow: "hidden",
+        }}
+        layout={{
+          // name: "circle",
+          // name: "random",
+          // name: "grid",
+          name: "breadthfirst",
+        }}
+        cy={cy => {
+          cy.on('select', 'node', e => {
+            console.log(`Clicked node ${e.target.id()} :: ${e.target.data().label}`);
+            setActiveElement(e.target.data());
+          })
+  
+          cy.on('select', 'edge', e => {
+            console.log(`Clicked edge ${e.target.id()} :: ${e.target.data().label}`);
+            setActiveElement(e.target.data());
+          })
 
-        cy.on('tap', 'edge', e => {
-          console.log(`Clicked edge ${e.target.id()} :: ${e.target.data().label}`);
-        })
-      }}
-    />
-  )
-}
-
-
-function AppSidebar({ isOpen = true }) {
-  return (
-    <div id="app-sidebar" style={{ 
-      flex: 1, 
-      border: "2px solid yellow", 
-      marginRight: "20px" 
-    }}>
-      <Collapse isOpen={isOpen}>
-        <Pre>Hello, world!</Pre>
-      </Collapse>
+          cy.on('unselect',  e => {
+            setActiveElement({});
+          })
+        }}
+      />
     </div>
   )
 }
 
 
-function AppBody() {
+function AppSidebar({ width = 600, height = 600, activeElement = {}, ...props }: { width?: number, height?: number, activeElement?: object }) {
+  console.log(activeElement);
+  const data = activeElement !== null ? activeElement : {};
   return (
-    <div id="app-body" style={{ flex: 1, border: "2px solid yellow" }}>
-      <AppGraph />
+    <div 
+      style={{
+        height: height,
+        width: "100%",
+        overflow: "hidden",
+      }}
+      {...props}
+    >
+      Hello, world!
+      <ReactJson src={data} />
     </div>
   )
 }
 
 
 function App() {
-  const [isOpen, setIsOpen] = useState(true);
+  // Capture window dimensions
+  const { width, height } = useWindowDimensions();
+
+  // Create hooks for setting the slider pannel widths
+  const sliderHandleWidth = 10;
+  const defaultWidth = (width - sliderHandleWidth) / 2;
+
+  const [leftWidth, _setLeftWidth] = useState(defaultWidth);
+  const setLeftWidth = (pct: number) => _setLeftWidth((width - sliderHandleWidth) * pct / 100);
+
+  const [rightWidth, _setRightWidth] = useState(defaultWidth);
+  const setRightWidth = (pct: number) => _setRightWidth((width - sliderHandleWidth) * pct / 100);
+
+  // Create hooks for setting the graph active node
+  const [activeElement, setActiveElement] = useState({});
+
   return (
     <div className="App">
-      <AppNav />
-      <div style={{ width: "98%", margin: "auto" }}>
-        <Button onClick={() => setIsOpen(!isOpen)}>Toggle Sidebar</Button>
-        <div style={{ display: 'flex' }}>
-          {
-            isOpen ? <AppSidebar /> : <></>
-          }
-          <AppBody />
-        </div>
+      <AppNav style={{ height: "50px" }}/>
+      <div 
+        id="main" 
+        style={{ 
+          width: width, 
+          height: `${height - 50}px`,
+          overflow: "hidden",
+          margin: "auto",
+        }}
+      >
+        <Split
+          className="split"
+          style={{
+            height: `${height - 50}px`,
+          }}
+          onDragEnd={sizes => {
+            const [left, right] = sizes;
+            console.log(`Drag end! Left: ${left}, right: ${right}`);
+            try {
+              setLeftWidth(left);
+              setRightWidth(right);
+            } catch (e) {
+              console.error(e);
+            }
+          }}
+          minSize={0}
+        >
+          <AppGraph width={leftWidth} height={height} setActiveElement={setActiveElement}/>
+          <AppSidebar width={rightWidth} height={height} activeElement={activeElement}/>
+        </Split>
       </div>
     </div>
   );
