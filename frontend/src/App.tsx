@@ -95,13 +95,14 @@ function AppGraph({ width = 600, height = 600, setActiveElement = ()=>{} }: { wi
           name: "breadthfirst",
         }}
         cy={cy => {
-          cy.on('select', 'node', e => {
+          const selectedGroup = cy.collection();
+
+          cy.on('select', e => {
             console.log(`Clicked node ${e.target.id()} :: ${e.target.data().label}`);
-            setActiveElement(e.target.data());
-          })
-  
-          cy.on('select', 'edge', e => {
-            console.log(`Clicked edge ${e.target.id()} :: ${e.target.data().label}`);
+
+            const selectedNode = e.target;
+            selectedGroup.union(selectedNode);
+
             setActiveElement(e.target.data());
           })
 
@@ -128,7 +129,16 @@ function AppSidebar({ width = 600, height = 600, activeElement = {}, ...props }:
       {...props}
     >
       Hello, world!
-      <ReactJson src={data} />
+      <ReactJson 
+        src={data} 
+        name={null}
+        collapsed={false}
+        indentWidth={2}
+        onSelect={(s) => { console.log(s) }}
+        onAdd={() => {}}
+        onEdit={() => {}}
+        onDelete={() => {}}
+      />
     </div>
   )
 }
